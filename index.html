@@ -1,47 +1,174 @@
-html
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Site Simples</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-        header {
-            background: #35424a;
-            color: #ffffff;
-            padding: 10px 0;
-            text-align: center;
-        }
-        main {
-            padding: 20px;
-        }
-        footer {
-            text-align: center;
-            padding: 10px 0;
-            background: #35424a;
-            color: #ffffff;
-            position: absolute;
-            width: 100%;
-            bottom: 0;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo de Tiro 3D Offline</title>
+  <style>
+    body, html { margin: 0; padding: 0; overflow: hidden; background: #000; }
+    canvas { display: block; }
+    #hud {
+      position: absolute; top: 10px; left: 10px; color: white; font-family: sans-serif;
+      background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;
+    }
+    #pauseMenu {
+      display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8); color: white; padding: 20px; font-size: 18px; border-radius: 10px;
+      text-align: center;
+    }
+    #pauseMenu button {
+      padding: 10px 20px; margin-top: 10px; font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>Bem-vindo ao Meu Site</h1>
-    </header>
-    <main>
-        <h2>Sobre Mim</h2>
-        <p>Este é um site de exemplo criado para demonstrar a estrutura básica de um site HTML.</p>
-    </main>
-    <footer>
-        <p>&copy; 2023 Meu Site. Todos os direitos reservados.</p>
-    </footer>
+  <div id="hud">
+    <div>Nível: <span id="nivel">1</span></div>
+    <div>Pontos: <span id="pontos">0</span></div>
+    <div>Arma: <span id="arma">Padrão</span></div>
+  </div>
+  <div id="pauseMenu">
+    <div>Jogo Pausado</div>
+    <button onclick="continuarJogo()">Continuar</button>
+  </div>
+  <audio id="somTiro" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_7507b9cb99.mp3?filename=laser-gun-shot-14762.mp3"></audio>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script>
+    let cena = new THREE.Scene();
+    let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    let renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);let chaoGeo = new THREE.PlaneGeometry(200, 200);
+let chaoMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
+let chao = new THREE.Mesh(chaoGeo, chaoMat);
+chao.rotation.x = -Math.PI / 2;
+cena.add(chao);
+
+camera.position.set(0, 1.6, 5);
+let projeteis = [];
+let inimigos = [];
+let pontos = 0;
+let nivel = 1;
+let armaAtual = "Padrão";
+
+const pontosHUD = document.getElementById("pontos");
+const nivelHUD = document.getElementById("nivel");
+const armaHUD = document.getElementById("arma");
+const somTiro = document.getElementById("somTiro");
+const pauseMenu = document.getElementById("pauseMenu");
+
+function atirar() {
+  let geo = new THREE.SphereGeometry(0.05);
+  let cor = armaAtual === "Explosiva" ? 0x00ff00 : 0xffff00;
+  let mat = new THREE.MeshBasicMaterial({ color: cor });
+  let esfera = new THREE.Mesh(geo, mat);
+  esfera.position.copy(camera.position);
+  esfera.direcao = new THREE.Vector3();
+  camera.getWorldDirection(esfera.direcao);
+  projeteis.push(esfera);
+  cena.add(esfera);
+  somTiro.play();
+}
+
+function spawnInimigo() {
+  let geo = new THREE.BoxGeometry(1, 1, 1);
+  let mat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+  let inimigo = new THREE.Mesh(geo, mat);
+  inimigo.position.set(Math.random()*40 - 20, 0.5, -Math.random()*40);
+  cena.add(inimigo);
+  inimigos.push(inimigo);
+}
+
+for (let i = 0; i < 5; i++) spawnInimigo();
+
+const teclas = {};
+document.addEventListener("keydown", e => {
+  teclas[e.key] = true;
+  if (e.key === "Escape") pausarJogo();
+  if (e.key === "1") mudarArma("Padrão");
+  if (e.key === "2") mudarArma("Explosiva");
+});
+document.addEventListener("keyup", e => teclas[e.key] = false);
+document.addEventListener("click", () => { if (!jogoPausado) atirar(); });
+
+function mudarArma(nome) {
+  armaAtual = nome;
+  armaHUD.textContent = nome;
+}
+
+function moverJogador() {
+  let dir = new THREE.Vector3();
+  let vel = 0.1;
+  if (teclas["w"]) dir.z -= 1;
+  if (teclas["s"]) dir.z += 1;
+  if (teclas["a"]) dir.x -= 1;
+  if (teclas["d"]) dir.x += 1;
+  dir.normalize();
+  camera.position.add(dir.multiplyScalar(vel));
+}
+
+function colisao(a, b) {
+  return a.position.distanceTo(b.position) < 1;
+}
+
+let jogoPausado = false;
+function pausarJogo() {
+  jogoPausado = true;
+  pauseMenu.style.display = "block";
+}
+function continuarJogo() {
+  jogoPausado = false;
+  pauseMenu.style.display = "none";
+}
+
+function animar() {
+  requestAnimationFrame(animar);
+  if (jogoPausado) return;
+
+  moverJogador();
+
+  projeteis.forEach((p, i) => {
+    p.position.add(p.direcao.clone().multiplyScalar(0.3));
+    inimigos.forEach((inimigo, j) => {
+      if (colisao(p, inimigo)) {
+        cena.remove(p);
+        cena.remove(inimigo);
+        projeteis.splice(i, 1);
+        inimigos.splice(j, 1);
+        pontos += armaAtual === "Explosiva" ? 20 : 10;
+        pontosHUD.textContent = pontos;
+        if (pontos % 50 === 0) {
+          nivel++;
+          nivelHUD.textContent = nivel;
+          for (let i = 0; i < nivel + 2; i++) spawnInimigo();
+        }
+      }
+    });
+  });
+
+  renderer.render(cena, camera);
+}
+animar();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(() => {
+    console.log('Service Worker registrado.');
+  });
+}
+
+  </script>
+  <script>
+    const swBlob = new Blob([`
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open('jogo-cache').then(cache => {
+          return cache.addAll(['./', './index.html']);
+        }));
+      });
+      self.addEventListener('fetch', e => {
+        e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+      });
+    `], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl);
+  </script>
 </body>
 </html>
