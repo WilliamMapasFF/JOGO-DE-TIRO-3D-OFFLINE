@@ -47,7 +47,7 @@
     <div class="btn" ontouchstart="keys.right=true" ontouchend="keys.right=false">▶</div>
     <div class="btn" ontouchstart="keys.jump=true" ontouchend="keys.jump=false">⤒</div>
   </div>
-  <audio id="bg-music" src="https://files.catbox.moe/8keapm.mp3" loop></audio>
+  <audio id="bg-music" src="https://vgmsite.com/soundtracks/super-mario-world/jgtvbsll/01%2520-%2520Title%2520Screen.mp3" preload="auto" loop></audio>
   <script>
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
@@ -138,7 +138,11 @@ window.addEventListener('keyup', e => {
 // Botão de tocar música
 const music = document.getElementById('bg-music');
 document.getElementById('music-btn').addEventListener('click', () => {
-  music.play();
+  music.play().then(() => {
+    console.log("Música tocando");
+  }).catch(e => {
+    alert("Toque na tela primeiro ou permita o áudio no navegador.");
+  });
 });
 
 update();
