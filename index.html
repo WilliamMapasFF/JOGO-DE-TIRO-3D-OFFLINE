@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mario Web Clone</title>
+  <title>Mario Clone</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     canvas { display: block; background: #5c94fc; }
@@ -13,18 +12,19 @@
       width: 100%;
       display: flex;
       justify-content: center;
-      gap: 20px;
+      gap: 40px;
       z-index: 10;
     }
     .btn {
-      width: 60px;
-      height: 60px;
+      width: 120px;
+      height: 120px;
       background: rgba(255,255,255,0.7);
       border-radius: 50%;
       text-align: center;
-      font-size: 30px;
-      line-height: 60px;
+      font-size: 48px;
+      line-height: 120px;
       user-select: none;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     }
   </style>
 </head>
@@ -39,136 +39,91 @@
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.height = window.innerHeight;const player = {
+  x: 50,
+  y: canvas.height - 130,
+  width: 50,
+  height: 50,
+  dx: 0,
+  dy: 0,
+  speed: 3,
+  gravity: 0.6,
+  jumpPower: -12,
+  grounded: false,
+  color: 'red'
+};
 
-    const keys = { left: false, right: false, jump: false };
+const groundHeight = 30;
+const blocks = [];
+for (let i = 0; i < canvas.width; i += 100) {
+  blocks.push({ x: i, y: canvas.height - groundHeight, width: 100, height: groundHeight });
+}
 
-    const marioImg = new Image();
-    marioImg.src = 'https://i.imgur.com/NuMv3Yp.png'; // Sprite do Mario andando (32x32 por frame)
+const keys = { left: false, right: false, jump: false };
 
-    const goombaImg = new Image();
-    goombaImg.src = 'https://i.imgur.com/NuMv3Yp.png'; // Substitua pelo sprite do Goomba
+function movePlayer() {
+  if (keys.left) player.dx = -player.speed;
+  if (keys.right) player.dx = player.speed;
+  if (!keys.left && !keys.right) player.dx = 0;
 
-    const blocksImg = new Image();
-    blocksImg.src = 'https://i.imgur.com/NuMv3Yp.png'; // Substitua pelo sprite dos blocos
+  player.dy += player.gravity;
 
-    const mario = {
-      x: 50,
-      y: 0,
-      width: 32,
-      height: 32,
-      dx: 0,
-      dy: 0,
-      speed: 3,
-      gravity: 0.8,
-      jumpPower: -12,
-      grounded: false,
-      frame: 0,
-      flip: false
-    };
+  if (player.grounded && keys.jump) {
+    player.dy = player.jumpPower;
+    player.grounded = false;
+  }
 
-    const blocks = [
-      { x: 0, y: canvas.height - 40, width: 5000, height: 40 },
-      { x: 200, y: canvas.height - 100, width: 100, height: 20 },
-      { x: 350, y: canvas.height - 150, width: 100, height: 20 }
-    ];
+  player.x += player.dx;
+  player.y += player.dy;
 
-    const goombas = [
-      { x: 400, y: canvas.height - 72, width: 32, height: 32, dx: -1 }
-    ];
-
-    let cameraX = 0;
-
-    function update() {
-      mario.dx = 0;
-      if (keys.left) { mario.dx = -mario.speed; mario.flip = true; }
-      if (keys.right) { mario.dx = mario.speed; mario.flip = false; }
-
-      mario.x += mario.dx;
-      mario.dy += mario.gravity;
-      mario.y += mario.dy;
-
-      mario.grounded = false;
-      for (let block of blocks) {
-        if (
-          mario.x < block.x + block.width &&
-          mario.x + mario.width > block.x &&
-          mario.y + mario.height > block.y &&
-          mario.y + mario.height < block.y + mario.dy + 10
-        ) {
-          mario.y = block.y - mario.height;
-          mario.dy = 0;
-          mario.grounded = true;
-        }
-      }
-
-      if (mario.grounded && keys.jump) {
-        mario.dy = mario.jumpPower;
-        mario.grounded = false;
-      }
-
-      if (mario.dx !== 0) {
-        mario.frame += 0.2;
-        if (mario.frame > 2) mario.frame = 0;
-      } else {
-        mario.frame = 0;
-      }
-
-      for (let goomba of goombas) {
-        goomba.x += goomba.dx;
-        if (goomba.x < 0 || goomba.x > canvas.width) goomba.dx *= -1;
-
-        if (
-          mario.x < goomba.x + goomba.width &&
-          mario.x + mario.width > goomba.x &&
-          mario.y < goomba.y + goomba.height &&
-          mario.y + mario.height > goomba.y
-        ) {
-          alert('Game Over!');
-          window.location.reload();
-        }
-      }
-
-      cameraX = mario.x - canvas.width / 2 + mario.width / 2;
+  player.grounded = false;
+  blocks.forEach(block => {
+    if (
+      player.x < block.x + block.width &&
+      player.x + player.width > block.x &&
+      player.y + player.height < block.y + block.height &&
+      player.y + player.height + player.dy >= block.y
+    ) {
+      player.y = block.y - player.height;
+      player.dy = 0;
+      player.grounded = true;
     }
+  });
+}
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-      ctx.translate(-cameraX, 0);
+function drawPlayer() {
+  ctx.fillStyle = player.color;
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+}
 
-      ctx.fillStyle = "#8B4513";
-      blocks.forEach(block => {
-        ctx.fillRect(block.x, block.y, block.width, block.height);
-      });
+function drawBlocks() {
+  ctx.fillStyle = 'green';
+  blocks.forEach(block => {
+    ctx.fillRect(block.x, block.y, block.width, block.height);
+  });
+}
 
-      // Mario sprite
-      const frameX = Math.floor(mario.frame) * 32;
-      ctx.save();
-      if (mario.flip) {
-        ctx.translate(mario.x + mario.width, mario.y);
-        ctx.scale(-1, 1);
-        ctx.drawImage(marioImg, frameX, 0, 32, 32, 0, 0, 32, 32);
-      } else {
-        ctx.drawImage(marioImg, frameX, 0, 32, 32, mario.x, mario.y, 32, 32);
-      }
-      ctx.restore();
+function update() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  movePlayer();
+  drawBlocks();
+  drawPlayer();
+  requestAnimationFrame(update);
+}
 
-      // Goombas
-      goombas.forEach(goomba => {
-        ctx.drawImage(goombaImg, goomba.x, goomba.y, goomba.width, goomba.height);
-      });
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+  if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+  if (e.key === 'ArrowUp' || e.key === ' ') keys.jump = true;
+});
+window.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+  if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+  if (e.key === 'ArrowUp' || e.key === ' ') keys.jump = false;
+});
 
-      ctx.restore();
-    }
+update();
 
-    function gameLoop() {
-      update();
-      draw();
-      requestAnimationFrame(gameLoop);
-    }
-
-    gameLoop();
   </script>
 </body>
 </html>
