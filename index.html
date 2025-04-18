@@ -8,11 +8,11 @@
     canvas { display: block; background: #5c94fc; }
     #controls {
       position: absolute;
-      bottom: 1000px;
+      bottom: 20px;
       width: 100%;
       display: flex;
       justify-content: center;
-      gap: 100px;
+      gap: 40px;
       z-index: 10;
     }
     .btn {
@@ -26,15 +26,28 @@
       user-select: none;
       box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     }
+    #music-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      font-size: 18px;
+      z-index: 20;
+    }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
+  <button id="music-btn">Tocar música</button>
   <div id="controls">
     <div class="btn" ontouchstart="keys.left=true" ontouchend="keys.left=false">◀</div>
     <div class="btn" ontouchstart="keys.right=true" ontouchend="keys.right=false">▶</div>
     <div class="btn" ontouchstart="keys.jump=true" ontouchend="keys.jump=false">⤒</div>
   </div>
+  <audio id="bg-music" src="https://files.catbox.moe/8keapm.mp3" loop></audio>
   <script>
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
@@ -120,6 +133,12 @@ window.addEventListener('keyup', e => {
   if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
   if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
   if (e.key === 'ArrowUp' || e.key === ' ') keys.jump = false;
+});
+
+// Botão de tocar música
+const music = document.getElementById('bg-music');
+document.getElementById('music-btn').addEventListener('click', () => {
+  music.play();
 });
 
 update();
