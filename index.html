@@ -93,6 +93,10 @@
     #audio-control {
       margin-top: 20px;
     }
+    #music-selector {
+      margin-top: 20px;
+      padding: 5px 10px;
+    }
   </style>
 </head>
 <body>
@@ -110,6 +114,18 @@
     <button class="toggle-theme" onclick="toggleTheme()">Alternar Tema Claro/Escuro</button>
     <div id="audio-control">
       <button onclick="toggleMusic()">Tocar/Parar Música Ambiente</button>
+      <select id="music-selector" onchange="changeMusic()">
+        <option value="1">Música 1: Peaceful Mind</option>
+        <option value="2">Música 2: Calm Breeze</option>
+        <option value="3">Música 3: Silent Waves</option>
+        <option value="4">Música 4: Gentle Rains</option>
+        <option value="5">Música 5: Night Sky</option>
+        <option value="6">Música 6: Ocean Waves</option>
+        <option value="7">Música 7: Tranquil Forest</option>
+        <option value="8">Música 8: Morning Dew</option>
+        <option value="9">Música 9: Soft Horizons</option>
+        <option value="10">Música 10: Dreamy Lights</option>
+      </select>
       <audio id="bgmusic" loop preload="auto">
         <source src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/Songs_For_Nothing/Monplaisir_-_07_-_Peaceful_Mind.mp3" type="audio/mp3">
       </audio>
@@ -166,6 +182,50 @@
       } else {
         music.pause();
       }
+    }
+
+    function changeMusic() {
+      const musicSelector = document.getElementById("music-selector");
+      const music = document.getElementById("bgmusic");
+      let musicUrl = "";
+      
+      // Definir a URL da música com base na escolha
+      switch (musicSelector.value) {
+        case "1":
+          musicUrl = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/Songs_For_Nothing/Monplaisir_-_07_-_Peaceful_Mind.mp3";
+          break;
+        case "2":
+          musicUrl = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/Songs_For_Nothing/Monplaisir_-_05_-_Calm_Breeze.mp3";
+          break;
+        case "3":
+          musicUrl = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/Songs_For_Nothing/Monplaisir_-_03_-_Silent_Waves.mp3";
+          break;
+        case "4":
+          musicUrl = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/Songs_For_Nothing/Monplaisir_-_06_-_Gentle_Rains.mp3";
+          break;
+        case "5":
+          musicUrl = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/Songs_For_Nothing/Monplaisir_-_09_-_Night_Sky.mp3";
+          break;
+        case "6":
+          musicUrl = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/Songs_For_Nothing/Monplaisir_-_08_-_Ocean_Waves.mp3";
+          break;
+        case "7":
+          musicUrl = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/Songs_For_Nothing/Monplaisir_-_10_-_Tranquil_Forest.mp3";
+          break;
+        case "8":
+          musicUrl = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/Songs_For_Nothing/Monplaisir_-_11_-_Morning_Dew.mp3";
+          break;
+        case "9":
+          musicUrl = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/Songs_For_Nothing/Monplaisir_-_12_-_Soft_Horizons.mp3";
+          break;
+        case "10":
+          musicUrl = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/Songs_For_Nothing/Monplaisir_-_13_-_Dreamy_Lights.mp3";
+          break;
+      }
+
+      // Trocar a música e reiniciar
+      music.src = musicUrl;
+      music.play();
     }
 
     // Terminal de comandos
