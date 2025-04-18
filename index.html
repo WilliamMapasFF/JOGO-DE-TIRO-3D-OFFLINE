@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,94 +10,82 @@
       --bg-dark: #121212;
       --text-light: #000;
       --text-dark: #fff;
-    }body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: var(--bg-light);
-  color: var(--text-light);
-  transition: background 0.3s, color 0.3s;
-}
-
-header {
-  padding: 20px;
-  text-align: center;
-  background-color: #6200ea;
-  color: white;
-}
-
-nav {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  padding: 10px;
-}
-
-nav a {
-  text-decoration: none;
-  color: #6200ea;
-  font-weight: bold;
-}
-
-.container {
-  padding: 20px;
-  text-align: center;
-}
-
-.footer {
-  margin-top: 40px;
-  padding: 10px;
-  text-align: center;
-  background-color: #eee;
-  font-size: 0.9em;
-}
-
-.dark {
-  background-color: var(--bg-dark);
-  color: var(--text-dark);
-}
-
-.dark nav a {
-  color: #bb86fc;
-}
-
-.toggle-theme {
-  margin-top: 20px;
-  padding: 10px 20px;
-  cursor: pointer;
-  border: none;
-  border-radius: 8px;
-  background-color: #6200ea;
-  color: white;
-}
-
-canvas#stars {
-  position: fixed;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: -1;
-}
-
-#terminal {
-  margin-top: 40px;
-  background: rgba(0, 0, 0, 0.05);
-  padding: 20px;
-  border-radius: 10px;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-#output {
-  white-space: pre-wrap;
-  text-align: left;
-  margin-top: 10px;
-}
-
-#audio-control {
-  margin-top: 20px;
-}
-
+    }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      transition: background 0.3s, color 0.3s;
+    }
+    header {
+      padding: 20px;
+      text-align: center;
+      background-color: #6200ea;
+      color: white;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 10px;
+    }
+    nav a {
+      text-decoration: none;
+      color: #6200ea;
+      font-weight: bold;
+    }
+    .container {
+      padding: 20px;
+      text-align: center;
+    }
+    .footer {
+      margin-top: 40px;
+      padding: 10px;
+      text-align: center;
+      background-color: #eee;
+      font-size: 0.9em;
+    }
+    .dark {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+    .dark nav a {
+      color: #bb86fc;
+    }
+    .toggle-theme {
+      margin-top: 20px;
+      padding: 10px 20px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #6200ea;
+      color: white;
+    }
+    canvas#stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+    #terminal {
+      margin-top: 40px;
+      background: rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #output {
+      white-space: pre-wrap;
+      text-align: left;
+      margin-top: 10px;
+    }
+    #audio-control {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -104,27 +93,33 @@ canvas#stars {
   <header>
     <h1>Bem-vindo ao site do ChatGPT</h1>
     <p>Um espaço pessoal com algumas funções interessantes!</p>
-  </header>  <nav>
+  </header>  
+  <nav>
     <a href="https://openai.com" target="_blank">OpenAI</a>
     <a href="https://chat.openai.com" target="_blank">ChatGPT</a>
     <a href="#terminal">Terminal Secreto</a>
-  </nav>  <div class="container">
-    <button class="toggle-theme" onclick="toggleTheme()">Alternar Tema Claro/Escuro</button><div id="audio-control">
-  <button onclick="toggleMusic()">Tocar/Parar Música Ambiente</button>
-  <audio id="bgmusic" loop preload="auto">
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3">
-  </audio>
-</div>
-
-<div id="terminal">
-  <label for="command">Digite um comando:</label><br>
-  <input type="text" id="command" placeholder="Ex: curiosidade" onkeydown="if(event.key==='Enter')runCommand()">
-  <div id="output"></div>
-</div>
-
-  </div>  <div class="footer">
+  </nav>  
+  <div class="container">
+    <!-- Botão para alternar tema -->
+    <button class="toggle-theme" onclick="toggleTheme()">Alternar Tema Claro/Escuro</button>
+    <div id="audio-control">
+      <button onclick="toggleMusic()">Tocar/Parar Música Ambiente</button>
+      <audio id="bgmusic" loop preload="auto">
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3">
+      </audio>
+    </div>
+    <div id="terminal">
+      <label for="command">Digite um comando:</label><br>
+      <input type="text" id="command" placeholder="Ex: curiosidade" onkeydown="if(event.key==='Enter')runCommand()">
+      <div id="output"></div>
+    </div>
+  </div>  
+  <div class="footer">
     <p>&copy; 2025 ChatGPT - Site fictício para demonstração. Todos os direitos reservados.</p>
-  </div>  <script>
+    <p>Desenvolvido com ajuda da <a href="https://openai.com" target="_blank">OpenAI</a> &copy; 2025</p>
+  </div>  
+
+  <script>
     // Estrelas animadas
     const canvas = document.getElementById('stars');
     const ctx = canvas.getContext('2d');
@@ -195,5 +190,6 @@ canvas#stars {
 
       output.textContent = response;
     }
-  </script></body>
+  </script>
+</body>
 </html>
