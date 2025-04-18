@@ -1,159 +1,153 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jogo de Tiro 3D Mobile</title>
+  <title>Mini Free Fire 3D</title>
   <style>
     body, html { margin: 0; padding: 0; overflow: hidden; background: #000; }
     canvas { display: block; }
-    #hud {
-      position: absolute; top: 10px; left: 10px; color: white; font-family: sans-serif;
-      background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;
+    #joystickLeft, #joystickRight {
+      position: absolute;
+      bottom: 20px;
+      width: 120px;
+      height: 120px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      touch-action: none;
     }
-    #buttons {
-      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; justify-content: space-between; width: 200px;
-    }
-    .btn {
-      width: 50px; height: 50px; background: rgba(0,0,0,0.5); color: white; border: none; font-size: 20px;
-      border-radius: 50%; cursor: pointer;
-    }
-    #pauseMenu {
-      display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.8); color: white; padding: 20px; font-size: 18px; border-radius: 10px;
+    #joystickLeft { left: 20px; }
+    #joystickRight { right: 20px; }
+    #shootBtn {
+      position: absolute;
+      bottom: 150px;
+      right: 30px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      font-size: 24px;
       text-align: center;
-    }
-    #pauseMenu button {
-      padding: 10px 20px; margin-top: 10px; font-size: 16px;
+      line-height: 60px;
+      border: 1px solid white;
     }
   </style>
 </head>
 <body>
-  <div id="hud">
-    <div>Nível: <span id="nivel">1</span></div>
-    <div>Pontos: <span id="pontos">0</span></div>
-    <div>Arma: <span id="arma">Padrão</span></div>
-  </div>
-  <div id="buttons">
-    <button class="btn" id="btnUp">↑</button>
-    <button class="btn" id="btnDown">↓</button>
-    <button class="btn" id="btnLeft">←</button>
-    <button class="btn" id="btnRight">→</button>
-    <button class="btn" id="btnShoot">💥</button>
-  </div>
-  <div id="pauseMenu">
-    <div>Jogo Pausado</div>
-    <button onclick="continuarJogo()">Continuar</button>
-  </div>
-  <audio id="somTiro" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_7507b9cb99.mp3?filename=laser-gun-shot-14762.mp3"></audio>
+  <div id="joystickLeft"></div>
+  <div id="joystickRight"></div>
+  <div id="shootBtn">🔫</div>
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/nipplejs@0.9.0/dist/nipplejs.min.js"></script>
   <script>
-    let cena = new THREE.Scene();
-    let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    let renderer = new THREE.WebGLRenderer();
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+    document.body.appendChild(renderer.domElement);const light = new THREE.HemisphereLight(0xffffff, 0x444444);
+scene.add(light);
 
-    let chaoGeo = new THREE.PlaneGeometry(50, 50);
-    let chaoMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
-    let chao = new THREE.Mesh(chaoGeo, chaoMat);
-    chao.rotation.x = -Math.PI / 2;
-    cena.add(chao);
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(100, 100),
+  new THREE.MeshStandardMaterial({ color: 0x228B22 })
+);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
 
-    camera.position.set(0, 1.6, 5);
-    let projeteis = [];
-    let inimigos = [];
-    let pontos = 0;
-    let nivel = 1;
-    let armaAtual = "Padrão";
+const player = new THREE.Group();
+const body = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 1, 0.5),
+  new THREE.MeshStandardMaterial({ color: 0x2194ce })
+);
+const head = new THREE.Mesh(
+  new THREE.SphereGeometry(0.25),
+  new THREE.MeshStandardMaterial({ color: 0xffcc99 })
+);
+head.position.y = 0.75;
+body.position.y = 0.5;
+player.add(body);
+player.add(head);
+scene.add(player);
 
-    const pontosHUD = document.getElementById("pontos");
-    const nivelHUD = document.getElementById("nivel");
-    const armaHUD = document.getElementById("arma");
-    const somTiro = document.getElementById("somTiro");
-    const pauseMenu = document.getElementById("pauseMenu");
+camera.position.set(0, 2, 4);
+camera.lookAt(player.position);
 
-    function atirar() {
-      let geo = new THREE.SphereGeometry(0.05);
-      let cor = armaAtual === "Explosiva" ? 0x00ff00 : 0xffff00;
-      let mat = new THREE.MeshBasicMaterial({ color: cor });
-      let esfera = new THREE.Mesh(geo, mat);
-      esfera.position.copy(camera.position);
-      esfera.direcao = new THREE.Vector3();
-      camera.getWorldDirection(esfera.direcao);
-      projeteis.push(esfera);
-      cena.add(esfera);
-      somTiro.play();
+let move = { x: 0, y: 0 };
+let rotate = { x: 0, y: 0 };
+
+const joystickLeft = nipplejs.create({
+  zone: document.getElementById('joystickLeft'),
+  mode: 'static',
+  position: { left: '60px', bottom: '60px' },
+  color: 'white'
+});
+
+joystickLeft.on('move', (evt, data) => {
+  const rad = data.angle.radian;
+  move.x = Math.cos(rad) * data.force * 0.1;
+  move.y = Math.sin(rad) * data.force * 0.1;
+});
+
+joystickLeft.on('end', () => {
+  move.x = 0;
+  move.y = 0;
+});
+
+const joystickRight = nipplejs.create({
+  zone: document.getElementById('joystickRight'),
+  mode: 'static',
+  position: { right: '60px', bottom: '60px' },
+  color: 'white'
+});
+
+joystickRight.on('move', (evt, data) => {
+  rotate.y = data.angle.degree > 180 ? -0.05 : 0.05;
+});
+
+joystickRight.on('end', () => {
+  rotate.y = 0;
+});
+
+document.getElementById("shootBtn").addEventListener("click", shoot);
+
+const bullets = [];
+function shoot() {
+  const bullet = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1),
+    new THREE.MeshBasicMaterial({ color: 0xffff00 })
+  );
+  bullet.position.copy(player.position);
+  bullet.position.y += 0.5;
+  bullet.velocity = new THREE.Vector3(0, 0, -1).applyQuaternion(player.quaternion).multiplyScalar(0.5);
+  bullets.push(bullet);
+  scene.add(bullet);
+}
+
+function update() {
+  player.rotation.y += rotate.y;
+  const dir = new THREE.Vector3(move.x, 0, -move.y).applyQuaternion(player.quaternion);
+  player.position.add(dir);
+
+  bullets.forEach((b, i) => {
+    b.position.add(b.velocity);
+    if (b.position.length() > 50) {
+      scene.remove(b);
+      bullets.splice(i, 1);
     }
+  });
 
-    function spawnInimigo() {
-      let geo = new THREE.BoxGeometry(1, 1, 1);
-      let mat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-      let inimigo = new THREE.Mesh(geo, mat);
-      inimigo.position.set(Math.random()*40 - 20, 0.5, -Math.random()*40);
-      cena.add(inimigo);
-      inimigos.push(inimigo);
-    }
+  const camOffset = new THREE.Vector3(0, 2, 4).applyQuaternion(player.quaternion);
+  camera.position.copy(player.position).add(camOffset);
+  camera.lookAt(player.position);
+}
 
-    for (let i = 0; i < 5; i++) spawnInimigo();
+function animate() {
+  requestAnimationFrame(animate);
+  update();
+  renderer.render(scene, camera);
+}
+animate();
 
-    document.getElementById("btnUp").addEventListener("click", () => moverJogador(0, -1));
-    document.getElementById("btnDown").addEventListener("click", () => moverJogador(0, 1));
-    document.getElementById("btnLeft").addEventListener("click", () => moverJogador(-1, 0));
-    document.getElementById("btnRight").addEventListener("click", () => moverJogador(1, 0));
-    document.getElementById("btnShoot").addEventListener("click", atirar);
-
-    function mudarArma(nome) {
-      armaAtual = nome;
-      armaHUD.textContent = nome;
-    }
-
-    function moverJogador(dx, dz) {
-      let dir = new THREE.Vector3(dx, 0, dz);
-      let vel = 0.1;
-      camera.position.add(dir.multiplyScalar(vel));
-    }
-
-    function colisao(a, b) {
-      return a.position.distanceTo(b.position) < 1;
-    }
-
-    let jogoPausado = false;
-    function pausarJogo() {
-      jogoPausado = true;
-      pauseMenu.style.display = "block";
-    }
-    function continuarJogo() {
-      jogoPausado = false;
-      pauseMenu.style.display = "none";
-    }
-
-    function animar() {
-      requestAnimationFrame(animar);
-      if (jogoPausado) return;
-
-      projeteis.forEach((p, i) => {
-        p.position.add(p.direcao.clone().multiplyScalar(0.3));
-        inimigos.forEach((inimigo, j) => {
-          if (colisao(p, inimigo)) {
-            cena.remove(p);
-            cena.remove(inimigo);
-            projeteis.splice(i, 1);
-            inimigos.splice(j, 1);
-            pontos += armaAtual === "Explosiva" ? 20 : 10;
-            pontosHUD.textContent = pontos;
-            if (pontos % 50 === 0) {
-              nivel++;
-              nivelHUD.textContent = nivel;
-              for (let i = 0; i < nivel + 2; i++) spawnInimigo();
-            }
-          }
-        });
-      });
-
-      renderer.render(cena, camera);
-    }
-    animar();
   </script>
 </body>
 </html>
