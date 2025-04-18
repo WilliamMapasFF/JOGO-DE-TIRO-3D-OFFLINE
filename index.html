@@ -143,12 +143,7 @@
     document.getElementById('music-btn').addEventListener('click', () => {
       music.play().then(() => {
         console.log("Música tocando");
-      }).catch(e => {
-        alert("Toque na tela primeiro ou permita o áudio no navegador.");
-      });
-    });
-
-    update();
+      }).catch(e =>
   </script>
 </body>
 </html>
