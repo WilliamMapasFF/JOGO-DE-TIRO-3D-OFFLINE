@@ -2,151 +2,113 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mini Free Fire 3D</title>
+  <title>Plataforma 2D Estilo Mario</title>
   <style>
-    body, html { margin: 0; padding: 0; overflow: hidden; background: #000; }
-    canvas { display: block; }
-    #joystickLeft, #joystickRight {
-      position: absolute;
-      bottom: 20px;
-      width: 120px;
-      height: 120px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 50%;
-      touch-action: none;
-    }
-    #joystickLeft { left: 20px; }
-    #joystickRight { right: 20px; }
-    #shootBtn {
-      position: absolute;
-      bottom: 150px;
-      right: 30px;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.2);
-      color: white;
-      font-size: 24px;
-      text-align: center;
-      line-height: 60px;
-      border: 1px solid white;
-    }
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #87CEEB; }
+    canvas { display: block; margin: 0 auto; background-color: #A9A9A9; }
+    #game-container { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
   </style>
 </head>
 <body>
-  <div id="joystickLeft"></div>
-  <div id="joystickRight"></div>
-  <div id="shootBtn">🔫</div>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/nipplejs@0.9.0/dist/nipplejs.min.js"></script>
+  <div id="game-container"></div>
   <script>
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);const light = new THREE.HemisphereLight(0xffffff, 0x444444);
-scene.add(light);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    document.getElementById('game-container').appendChild(canvas);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;// Personagem
+const player = { x: 50, y: canvas.height - 120, width: 50, height: 50, speed: 5, dx: 0, dy: 0, gravity: 0.8, jumpPower: -15, grounded: false };
+let keys = { left: false, right: false, space: false };
 
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(100, 100),
-  new THREE.MeshStandardMaterial({ color: 0x228B22 })
-);
-ground.rotation.x = -Math.PI / 2;
-scene.add(ground);
-
-const player = new THREE.Group();
-const body = new THREE.Mesh(
-  new THREE.BoxGeometry(0.5, 1, 0.5),
-  new THREE.MeshStandardMaterial({ color: 0x2194ce })
-);
-const head = new THREE.Mesh(
-  new THREE.SphereGeometry(0.25),
-  new THREE.MeshStandardMaterial({ color: 0xffcc99 })
-);
-head.position.y = 0.75;
-body.position.y = 0.5;
-player.add(body);
-player.add(head);
-scene.add(player);
-
-camera.position.set(0, 2, 4);
-camera.lookAt(player.position);
-
-let move = { x: 0, y: 0 };
-let rotate = { x: 0, y: 0 };
-
-const joystickLeft = nipplejs.create({
-  zone: document.getElementById('joystickLeft'),
-  mode: 'static',
-  position: { left: '60px', bottom: '60px' },
-  color: 'white'
-});
-
-joystickLeft.on('move', (evt, data) => {
-  const rad = data.angle.radian;
-  move.x = Math.cos(rad) * data.force * 0.1;
-  move.y = Math.sin(rad) * data.force * 0.1;
-});
-
-joystickLeft.on('end', () => {
-  move.x = 0;
-  move.y = 0;
-});
-
-const joystickRight = nipplejs.create({
-  zone: document.getElementById('joystickRight'),
-  mode: 'static',
-  position: { right: '60px', bottom: '60px' },
-  color: 'white'
-});
-
-joystickRight.on('move', (evt, data) => {
-  rotate.y = data.angle.degree > 180 ? -0.05 : 0.05;
-});
-
-joystickRight.on('end', () => {
-  rotate.y = 0;
-});
-
-document.getElementById("shootBtn").addEventListener("click", shoot);
-
-const bullets = [];
-function shoot() {
-  const bullet = new THREE.Mesh(
-    new THREE.SphereGeometry(0.1),
-    new THREE.MeshBasicMaterial({ color: 0xffff00 })
-  );
-  bullet.position.copy(player.position);
-  bullet.position.y += 0.5;
-  bullet.velocity = new THREE.Vector3(0, 0, -1).applyQuaternion(player.quaternion).multiplyScalar(0.5);
-  bullets.push(bullet);
-  scene.add(bullet);
+// Blocos
+const groundHeight = 30;
+const blocks = [];
+for (let i = 0; i < canvas.width; i += 100) {
+  blocks.push({ x: i, y: canvas.height - groundHeight, width: 100, height: groundHeight });
 }
 
-function update() {
-  player.rotation.y += rotate.y;
-  const dir = new THREE.Vector3(move.x, 0, -move.y).applyQuaternion(player.quaternion);
-  player.position.add(dir);
+// Inimigos
+const enemies = [{ x: 300, y: canvas.height - 120, width: 50, height: 50, speed: 2, direction: 1 }];
 
-  bullets.forEach((b, i) => {
-    b.position.add(b.velocity);
-    if (b.position.length() > 50) {
-      scene.remove(b);
-      bullets.splice(i, 1);
+// Funções de movimento
+function movePlayer() {
+  if (keys.left) player.dx = -player.speed;
+  if (keys.right) player.dx = player.speed;
+  if (!keys.left && !keys.right) player.dx = 0;
+  player.x += player.dx;
+
+  if (player.y + player.height < canvas.height - groundHeight) {
+    player.dy += player.gravity;
+    player.grounded = false;
+  } else {
+    player.dy = 0;
+    player.y = canvas.height - player.height - groundHeight;
+    player.grounded = true;
+  }
+  player.y += player.dy;
+
+  if (keys.space && player.grounded) { player.dy = player.jumpPower; }
+}
+
+// Desenho dos elementos
+function drawPlayer() {
+  ctx.fillStyle = 'blue';
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+}
+
+function drawBlocks() {
+  ctx.fillStyle = 'green';
+  blocks.forEach(block => {
+    ctx.fillRect(block.x, block.y, block.width, block.height);
+  });
+}
+
+function drawEnemies() {
+  ctx.fillStyle = 'red';
+  enemies.forEach(enemy => {
+    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+  });
+}
+
+// Função de colisão
+function checkCollisions() {
+  blocks.forEach(block => {
+    if (player.x + player.width > block.x && player.x < block.x + block.width && player.y + player.height > block.y && player.y + player.height < block.y + 10) {
+      player.dy = 0;
+      player.y = block.y - player.height;
+      player.grounded = true;
     }
   });
-
-  const camOffset = new THREE.Vector3(0, 2, 4).applyQuaternion(player.quaternion);
-  camera.position.copy(player.position).add(camOffset);
-  camera.lookAt(player.position);
 }
 
-function animate() {
-  requestAnimationFrame(animate);
-  update();
-  renderer.render(scene, camera);
+// Atualização do jogo
+function update() {
+  movePlayer();
+  checkCollisions();
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBlocks();
+  drawPlayer();
+  drawEnemies();
+
+  requestAnimationFrame(update);
 }
-animate();
+
+// Controle de teclas
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+  if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+  if (e.key === ' ' || e.key === 'ArrowUp') keys.space = true;
+});
+
+document.addEventListener('keyup', (e) => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+  if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+  if (e.key === ' ' || e.key === 'ArrowUp') keys.space = false;
+});
+
+// Iniciar o jogo
+update();
 
   </script>
 </body>
