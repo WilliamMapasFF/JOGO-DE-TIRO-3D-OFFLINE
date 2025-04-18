@@ -1,117 +1,141 @@
 <!DOCTYPE html><html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mini Mario Mobile</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mario Web Clone</title>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #87CEEB;
-    }
-    canvas {
-      display: block;
-      margin: auto;
-      background: #A9A9A9;
-    }
-    .controls {
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    canvas { display: block; background: #5c94fc; }
+    #controls {
       position: absolute;
       bottom: 20px;
-      left: 0;
-      right: 0;
+      width: 100%;
       display: flex;
       justify-content: center;
-      gap: 15px;
+      gap: 20px;
+      z-index: 10;
     }
     .btn {
       width: 60px;
       height: 60px;
-      background: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.7);
       border-radius: 50%;
       text-align: center;
+      font-size: 30px;
       line-height: 60px;
-      font-size: 24px;
       user-select: none;
     }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
-  <div class="controls">
+  <div id="controls">
     <div class="btn" ontouchstart="keys.left=true" ontouchend="keys.left=false">◀</div>
     <div class="btn" ontouchstart="keys.right=true" ontouchend="keys.right=false">▶</div>
     <div class="btn" ontouchstart="keys.jump=true" ontouchend="keys.jump=false">⤒</div>
   </div>
   <script>
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;const groundHeight = 40;
+    canvas.height = window.innerHeight;const keys = { left: false, right: false, jump: false };
 
-const player = {
+const marioImg = new Image();
+marioImg.src = 'https://i.imgur.com/NuMv3Yp.png'; // Sprite do Mario andando (32x32 por frame)
+
+const mario = {
   x: 50,
-  y: canvas.height - 90,
-  width: 40,
-  height: 40,
+  y: 0,
+  width: 32,
+  height: 32,
   dx: 0,
   dy: 0,
-  speed: 4,
-  jumpPower: -14,
+  speed: 3,
   gravity: 0.8,
-  grounded: false
+  jumpPower: -12,
+  grounded: false,
+  frame: 0,
+  flip: false
 };
 
-const keys = { left: false, right: false, jump: false };
+const blocks = [
+  { x: 0, y: canvas.height - 40, width: 5000, height: 40 },
+  { x: 200, y: canvas.height - 100, width: 100, height: 20 },
+  { x: 350, y: canvas.height - 150, width: 100, height: 20 }
+];
 
-const blocks = [];
-for (let i = 0; i < canvas.width; i += 100) {
-  blocks.push({ x: i, y: canvas.height - groundHeight, width: 100, height: groundHeight });
-}
+let cameraX = 0;
 
-function movePlayer() {
-  if (keys.left) player.dx = -player.speed;
-  else if (keys.right) player.dx = player.speed;
-  else player.dx = 0;
+function update() {
+  mario.dx = 0;
+  if (keys.left) { mario.dx = -mario.speed; mario.flip = true; }
+  if (keys.right) { mario.dx = mario.speed; mario.flip = false; }
 
-  player.x += player.dx;
+  mario.x += mario.dx;
+  mario.dy += mario.gravity;
+  mario.y += mario.dy;
 
-  if (!player.grounded) {
-    player.dy += player.gravity;
-  } else {
-    player.dy = 0;
-    if (keys.jump) {
-      player.dy = player.jumpPower;
-      player.grounded = false;
+  mario.grounded = false;
+  for (let block of blocks) {
+    if (
+      mario.x < block.x + block.width &&
+      mario.x + mario.width > block.x &&
+      mario.y + mario.height > block.y &&
+      mario.y + mario.height < block.y + mario.dy + 10
+    ) {
+      mario.y = block.y - mario.height;
+      mario.dy = 0;
+      mario.grounded = true;
     }
   }
-  player.y += player.dy;
 
-  if (player.y + player.height > canvas.height - groundHeight) {
-    player.y = canvas.height - groundHeight - player.height;
-    player.grounded = true;
-  } else {
-    player.grounded = false;
+  if (mario.grounded && keys.jump) {
+    mario.dy = mario.jumpPower;
+    mario.grounded = false;
   }
+
+  if (mario.dx !== 0) {
+    mario.frame += 0.2;
+    if (mario.frame > 2) mario.frame = 0;
+  } else {
+    mario.frame = 0;
+  }
+
+  cameraX = mario.x - canvas.width / 2 + mario.width / 2;
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(-cameraX, 0);
 
-  ctx.fillStyle = 'green';
-  blocks.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
+  ctx.fillStyle = "#8B4513";
+  blocks.forEach(block => {
+    ctx.fillRect(block.x, block.y, block.width, block.height);
+  });
 
-  ctx.fillStyle = 'blue';
-  ctx.fillRect(player.x, player.y, player.width, player.height);
+  // Mario sprite
+  const frameX = Math.floor(mario.frame) * 32;
+  ctx.save();
+  if (mario.flip) {
+    ctx.translate(mario.x + mario.width, mario.y);
+    ctx.scale(-1, 1);
+    ctx.drawImage(marioImg, frameX, 0, 32, 32, 0, 0, 32, 32);
+  } else {
+    ctx.drawImage(marioImg, frameX, 0, 32, 32, mario.x, mario.y, 32, 32);
+  }
+  ctx.restore();
+
+  ctx.restore();
 }
 
-function loop() {
-  movePlayer();
+function gameLoop() {
+  update();
   draw();
-  requestAnimationFrame(loop);
+  requestAnimationFrame(gameLoop);
 }
 
-loop();
+gameLoop();
 
   </script>
 </body>
