@@ -1,114 +1,117 @@
 <!DOCTYPE html><html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Plataforma 2D Estilo Mario</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Mario Mobile</title>
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #87CEEB; }
-    canvas { display: block; margin: 0 auto; background-color: #A9A9A9; }
-    #game-container { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #87CEEB;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: #A9A9A9;
+    }
+    .controls {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+    .btn {
+      width: 60px;
+      height: 60px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 50%;
+      text-align: center;
+      line-height: 60px;
+      font-size: 24px;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
-  <div id="game-container"></div>
+  <canvas id="game"></canvas>
+  <div class="controls">
+    <div class="btn" ontouchstart="keys.left=true" ontouchend="keys.left=false">◀</div>
+    <div class="btn" ontouchstart="keys.right=true" ontouchend="keys.right=false">▶</div>
+    <div class="btn" ontouchstart="keys.jump=true" ontouchend="keys.jump=false">⤒</div>
+  </div>
   <script>
-    const canvas = document.createElement('canvas');
+    const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
-    document.getElementById('game-container').appendChild(canvas);
     canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;// Personagem
-const player = { x: 50, y: canvas.height - 120, width: 50, height: 50, speed: 5, dx: 0, dy: 0, gravity: 0.8, jumpPower: -15, grounded: false };
-let keys = { left: false, right: false, space: false };
+    canvas.height = window.innerHeight;const groundHeight = 40;
 
-// Blocos
-const groundHeight = 30;
+const player = {
+  x: 50,
+  y: canvas.height - 90,
+  width: 40,
+  height: 40,
+  dx: 0,
+  dy: 0,
+  speed: 4,
+  jumpPower: -14,
+  gravity: 0.8,
+  grounded: false
+};
+
+const keys = { left: false, right: false, jump: false };
+
 const blocks = [];
 for (let i = 0; i < canvas.width; i += 100) {
   blocks.push({ x: i, y: canvas.height - groundHeight, width: 100, height: groundHeight });
 }
 
-// Inimigos
-const enemies = [{ x: 300, y: canvas.height - 120, width: 50, height: 50, speed: 2, direction: 1 }];
-
-// Funções de movimento
 function movePlayer() {
   if (keys.left) player.dx = -player.speed;
-  if (keys.right) player.dx = player.speed;
-  if (!keys.left && !keys.right) player.dx = 0;
+  else if (keys.right) player.dx = player.speed;
+  else player.dx = 0;
+
   player.x += player.dx;
 
-  if (player.y + player.height < canvas.height - groundHeight) {
+  if (!player.grounded) {
     player.dy += player.gravity;
-    player.grounded = false;
   } else {
     player.dy = 0;
-    player.y = canvas.height - player.height - groundHeight;
-    player.grounded = true;
+    if (keys.jump) {
+      player.dy = player.jumpPower;
+      player.grounded = false;
+    }
   }
   player.y += player.dy;
 
-  if (keys.space && player.grounded) { player.dy = player.jumpPower; }
+  if (player.y + player.height > canvas.height - groundHeight) {
+    player.y = canvas.height - groundHeight - player.height;
+    player.grounded = true;
+  } else {
+    player.grounded = false;
+  }
 }
 
-// Desenho dos elementos
-function drawPlayer() {
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = 'green';
+  blocks.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
+
   ctx.fillStyle = 'blue';
   ctx.fillRect(player.x, player.y, player.width, player.height);
 }
 
-function drawBlocks() {
-  ctx.fillStyle = 'green';
-  blocks.forEach(block => {
-    ctx.fillRect(block.x, block.y, block.width, block.height);
-  });
-}
-
-function drawEnemies() {
-  ctx.fillStyle = 'red';
-  enemies.forEach(enemy => {
-    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-  });
-}
-
-// Função de colisão
-function checkCollisions() {
-  blocks.forEach(block => {
-    if (player.x + player.width > block.x && player.x < block.x + block.width && player.y + player.height > block.y && player.y + player.height < block.y + 10) {
-      player.dy = 0;
-      player.y = block.y - player.height;
-      player.grounded = true;
-    }
-  });
-}
-
-// Atualização do jogo
-function update() {
+function loop() {
   movePlayer();
-  checkCollisions();
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawBlocks();
-  drawPlayer();
-  drawEnemies();
-
-  requestAnimationFrame(update);
+  draw();
+  requestAnimationFrame(loop);
 }
 
-// Controle de teclas
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
-  if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
-  if (e.key === ' ' || e.key === 'ArrowUp') keys.space = true;
-});
-
-document.addEventListener('keyup', (e) => {
-  if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
-  if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
-  if (e.key === ' ' || e.key === 'ArrowUp') keys.space = false;
-});
-
-// Iniciar o jogo
-update();
+loop();
 
   </script>
 </body>
