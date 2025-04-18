@@ -1,149 +1,199 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mario Clone</title>
+  <title>Site do ChatGPT</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    canvas { display: block; background: #5c94fc; }
-    #controls {
-      position: absolute;
-      bottom: 1000px;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      z-index: 10;
-    }
-    .btn {
-      width: 120px;
-      height: 120px;
-      background: rgba(255,255,255,0.7);
-      border-radius: 50%;
-      text-align: center;
-      font-size: 48px;
-      line-height: 120px;
-      user-select: none;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    }
-    #music-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      padding: 12px 20px;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-      font-size: 18px;
-      z-index: 20;
-    }
+    :root {
+      --bg-light: #f4f4f4;
+      --bg-dark: #121212;
+      --text-light: #000;
+      --text-dark: #fff;
+    }body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: var(--bg-light);
+  color: var(--text-light);
+  transition: background 0.3s, color 0.3s;
+}
+
+header {
+  padding: 20px;
+  text-align: center;
+  background-color: #6200ea;
+  color: white;
+}
+
+nav {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 10px;
+}
+
+nav a {
+  text-decoration: none;
+  color: #6200ea;
+  font-weight: bold;
+}
+
+.container {
+  padding: 20px;
+  text-align: center;
+}
+
+.footer {
+  margin-top: 40px;
+  padding: 10px;
+  text-align: center;
+  background-color: #eee;
+  font-size: 0.9em;
+}
+
+.dark {
+  background-color: var(--bg-dark);
+  color: var(--text-dark);
+}
+
+.dark nav a {
+  color: #bb86fc;
+}
+
+.toggle-theme {
+  margin-top: 20px;
+  padding: 10px 20px;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  background-color: #6200ea;
+  color: white;
+}
+
+canvas#stars {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+#terminal {
+  margin-top: 40px;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#output {
+  white-space: pre-wrap;
+  text-align: left;
+  margin-top: 10px;
+}
+
+#audio-control {
+  margin-top: 20px;
+}
+
   </style>
 </head>
 <body>
-  <canvas id="game"></canvas>
-  <button id="music-btn">Tocar música</button>
-  <div id="controls">
-    <div class="btn" ontouchstart="keys.left=true" ontouchend="keys.left=false">◀</div>
-    <div class="btn" ontouchstart="keys.right=true" ontouchend="keys.right=false">▶</div>
-    <div class="btn" ontouchstart="keys.jump=true" ontouchend="keys.jump=false">⤒</div>
-  </div>
-  <audio id="bg-music" src="https://drive.google.com/uc?id=1dIT2S2P-pkl0TMlZJ7OUapnh82pyNe3D" preload="auto" loop></audio>
-  <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
+  <canvas id="stars"></canvas>
+  <header>
+    <h1>Bem-vindo ao site do ChatGPT</h1>
+    <p>Um espaço pessoal com algumas funções interessantes!</p>
+  </header>  <nav>
+    <a href="https://openai.com" target="_blank">OpenAI</a>
+    <a href="https://chat.openai.com" target="_blank">ChatGPT</a>
+    <a href="#terminal">Terminal Secreto</a>
+  </nav>  <div class="container">
+    <button class="toggle-theme" onclick="toggleTheme()">Alternar Tema Claro/Escuro</button><div id="audio-control">
+  <button onclick="toggleMusic()">Tocar/Parar Música Ambiente</button>
+  <audio id="bgmusic" loop preload="auto">
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3">
+  </audio>
+</div>
+
+<div id="terminal">
+  <label for="command">Digite um comando:</label><br>
+  <input type="text" id="command" placeholder="Ex: curiosidade" onkeydown="if(event.key==='Enter')runCommand()">
+  <div id="output"></div>
+</div>
+
+  </div>  <div class="footer">
+    <p>&copy; 2025 ChatGPT - Site fictício para demonstração. Todos os direitos reservados.</p>
+  </div>  <script>
+    // Estrelas animadas
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const player = {
-      x: 50,
-      y: canvas.height - 130,
-      width: 50,
-      height: 50,
-      dx: 0,
-      dy: 0,
-      speed: 3,
-      gravity: 0.6,
-      jumpPower: -12,
-      grounded: false,
-      color: 'red'
-    };
+    let stars = Array.from({ length: 100 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.5,
+      d: Math.random() * 1
+    }));
 
-    const groundHeight = 30;
-    const blocks = [];
-    for (let i = 0; i < canvas.width; i += 100) {
-      blocks.push({ x: i, y: canvas.height - groundHeight, width: 100, height: groundHeight });
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'white';
+      stars.forEach(s => {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+        s.y += s.d;
+        if (s.y > canvas.height) s.y = 0;
+      });
+      requestAnimationFrame(drawStars);
+    }
+    drawStars();
+
+    // Alternar tema claro/escuro
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
     }
 
-    const keys = { left: false, right: false, jump: false };
+    // Música ambiente
+    function toggleMusic() {
+      const music = document.getElementById("bgmusic");
+      if (music.paused) {
+        music.play();
+      } else {
+        music.pause();
+      }
+    }
 
-    function movePlayer() {
-      if (keys.left) player.dx = -player.speed;
-      if (keys.right) player.dx = player.speed;
-      if (!keys.left && !keys.right) player.dx = 0;
+    // Terminal de comandos
+    function runCommand() {
+      const input = document.getElementById('command').value.trim().toLowerCase();
+      const output = document.getElementById('output');
+      let response = '';
 
-      player.dy += player.gravity;
-
-      if (player.grounded && keys.jump) {
-        player.dy = player.jumpPower;
-        player.grounded = false;
+      switch (input) {
+        case 'curiosidade':
+          response = 'Eu fui treinado com bilhões de palavras e dados para ajudar você a qualquer momento!';
+          break;
+        case '1':
+          response = 'Você digitou o comando 1: Seja bem-vindo ao site pessoal do ChatGPT!';
+          break;
+        case '2':
+          response = 'Comando 2 ativado: Você pode alternar entre temas e ouvir música aqui.';
+          break;
+        case '3':
+          response = 'Comando 3: Use esse terminal para descobrir segredos escondidos.';
+          break;
+        case '4':
+          response = 'Comando 4: Site fictício feito com carinho por mim.';
+          break;
+        default:
+          response = 'Comando desconhecido. Tente: 1, 2, 3, 4 ou curiosidade.';
       }
 
-      player.x += player.dx;
-      player.y += player.dy;
-
-      player.grounded = false;
-      blocks.forEach(block => {
-        if (
-          player.x < block.x + block.width &&
-          player.x + player.width > block.x &&
-          player.y + player.height < block.y + block.height &&
-          player.y + player.height + player.dy >= block.y
-        ) {
-          player.y = block.y - player.height;
-          player.dy = 0;
-          player.grounded = true;
-        }
-      });
+      output.textContent = response;
     }
-
-    function drawPlayer() {
-      ctx.fillStyle = player.color;
-      ctx.fillRect(player.x, player.y, player.width, player.height);
-    }
-
-    function drawBlocks() {
-      ctx.fillStyle = 'green';
-      blocks.forEach(block => {
-        ctx.fillRect(block.x, block.y, block.width, block.height);
-      });
-    }
-
-    function update() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      movePlayer();
-      drawBlocks();
-      drawPlayer();
-      requestAnimationFrame(update);
-    }
-
-    window.addEventListener('keydown', e => {
-      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
-      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
-      if (e.key === 'ArrowUp' || e.key === ' ') keys.jump = true;
-    });
-    window.addEventListener('keyup', e => {
-      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
-      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
-      if (e.key === 'ArrowUp' || e.key === ' ') keys.jump = false;
-    });
-
-    // Botão de tocar música
-    const music = document.getElementById('bg-music');
-    document.getElementById('music-btn').addEventListener('click', () => {
-      music.play().then(() => {
-        console.log("Música tocando");
-      }).catch(e =>
-  </script>
-</body>
+  </script></body>
 </html>
